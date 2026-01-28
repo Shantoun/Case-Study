@@ -22,3 +22,5 @@ ws = sh.worksheet(SHEET_TAB_NAME)  # or sh.sheet1
 rows = ws.get_all_values()
 
 df = pd.DataFrame(rows[1:], columns=rows[0])
+
+st.write(df)
