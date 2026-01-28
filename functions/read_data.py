@@ -5,7 +5,7 @@ import pandas as pd
 from google.oauth2.service_account import Credentials
 
 
-def google_sheet_to_df(sheet_url, tab_name):
+def read_gsheet(sheet_url, tab_name):
     scopes = [
         "https://www.googleapis.com/auth/spreadsheets.readonly",
         "https://www.googleapis.com/auth/drive.readonly",
