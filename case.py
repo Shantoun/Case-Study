@@ -138,7 +138,7 @@ with tab1:
     # -------------------------
     # Win rate per month
     # -------------------------
-import plotly.graph_objects as go
+
 
 def win_rate_by_month(df):
     tmp = df[df["Stage"].isin(["Closed Won", "Closed Lost"])].copy()
