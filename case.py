@@ -140,9 +140,14 @@ with tab1:
     # -------------------------
 
 
-    def win_rate_by_month(df):
+    def win_rate_by_month(df, forecast_today):
         tmp = df[df["Stage"].isin(["Closed Won", "Closed Lost"])].copy()
-        tmp["month"] = pd.to_datetime(tmp["Close Date"]).dt.to_period("M").dt.to_timestamp()
+        tmp["Close Date"] = pd.to_datetime(tmp["Close Date"])
+    
+
+        tmp = tmp[tmp["Close Date"] <= pd.to_datetime(forecast_today)]
+    
+        tmp["month"] = tmp["Close Date"].dt.to_period("M").dt.to_timestamp()
     
         out = (
             tmp.groupby(["month", "Stage"])["Stage"]
@@ -179,6 +184,26 @@ with tab1:
                 ),
             )
         )
+    
+        # ----- annotation: arrow pointing to Jan 2024 -----
+        jan_2024 = pd.Timestamp("2024-01-01")
+        if (monthly_df["month"] == jan_2024).any():
+            y_jan = float(monthly_df.loc[monthly_df["month"] == jan_2024, "win_rate"].iloc[0])
+    
+            fig.add_annotation(
+                x=jan_2024,
+                y=y_jan,
+                text="Reliable from here (enough data)",
+                showarrow=True,
+                arrowhead=3,
+                ax=0,          # arrow tail x offset (pixels)
+                ay=80,         # arrow tail y offset (pixels) -> from below
+                xanchor="left",
+                yanchor="bottom",
+                bgcolor="rgba(255,255,255,0.85)",
+                bordercolor="rgba(0,0,0,0.15)",
+                borderwidth=1,
+            )
     
         fig.update_layout(
             title="Monthly Win Rate (Closed Outcomes Only)",
