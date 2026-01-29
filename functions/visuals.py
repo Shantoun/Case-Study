@@ -39,7 +39,7 @@ def plot_monthly_win_rate_line(monthly_df, color, reliable_date):
         )
 
     fig.update_layout(
-        title="Monthly Win Rate (Closed Outcomes Only)",
+        title="Monthly Win Rate",
         xaxis=dict(
             title=None,
             tickformat="%b %y",
