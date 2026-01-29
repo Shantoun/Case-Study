@@ -243,7 +243,7 @@ with tab1:
 
 
     # color picker
-    monthly_wr = win_rate_by_month(df)
+    monthly_wr = win_rate_by_month(df, pd.to_datetime(forecast_today))
     
     color = st.color_picker("Bar color", "#636EFA")
     st.plotly_chart(
