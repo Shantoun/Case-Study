@@ -132,12 +132,9 @@ with tab1:
     
     global_win_rate = closed_won_count / (closed_won_count + closed_lost_count)
     
-    st.metric("Global Win Rate", f"{global_win_rate:.1%}")
-    st.caption(f"Closed Won: {closed_won_count:,} | Closed Lost: {closed_lost_count:,}")
     
 
     jan_2024 = pd.Timestamp("2024-01-01")
-
 
     mask = (
         (pd.to_datetime(df["Close Date"]) >= jan_2024) &
@@ -151,8 +148,7 @@ with tab1:
     
     global_win_rate = closed_won_count / (closed_won_count + closed_lost_count)
     
-    st.metric("Global Win Rate (Since Jan 2024)", f"{global_win_rate:.1%}")
-    st.caption(f"Closed Won: {closed_won_count:,} | Closed Lost: {closed_lost_count:,}")
+
 
 
 
@@ -210,6 +206,105 @@ with tab1:
     st.caption(
         "Goal: identify the **top 3 drivers** that move win rate the most (without overfitting)."
     )
+
+
+
+
+
+
+
+
+
+
+
+    def win_rate_offset_matrix(df, cat_col):
+        # closed outcomes only
+        d = df[df["Stage"].isin(["Closed Won", "Closed Lost"])].copy()
+    
+        # global baseline
+        won = (d["Stage"] == "Closed Won").sum()
+        lost = (d["Stage"] == "Closed Lost").sum()
+        total = won + lost
+        global_rate = won / total if total else 0.0
+    
+        # per-category
+        g = (
+            d.groupby(cat_col, dropna=False)["Stage"]
+            .value_counts()
+            .unstack(fill_value=0)
+        )
+        g["opps"] = g.get("Closed Won", 0) + g.get("Closed Lost", 0)
+        g["close_rate"] = g.get("Closed Won", 0) / g["opps"].where(g["opps"] != 0, pd.NA)
+        g["diff_vs_global"] = g["close_rate"] - global_rate
+        g["pct_of_total"] = g["opps"] / total if total else 0.0
+        g["weighted_diff"] = g["diff_vs_global"] * g["pct_of_total"]
+    
+        # build the matrix exactly as you described (metrics as rows, categories as columns)
+        out = pd.DataFrame(
+            {
+                "close rate": g["close_rate"],
+                "close rate - global average": g["diff_vs_global"],
+                "# of opps": g["opps"],
+                "% of total": g["pct_of_total"],
+                "weighted difference": g["weighted_diff"],
+            }
+        ).T
+    
+        return out, global_rate
+    
+
+
+
+
+
+
+
+    
+    # usage
+    matrix, global_rate = win_rate_offset_matrix(df, "Segment")  # or df
+    
+    # readable formatting (non-hacky): use Styler
+    st.dataframe(
+        matrix.style
+            .format(na_rep="")
+            .format("{:.1%}", subset=pd.IndexSlice[["close rate", "% of total"], :])
+            .format("{:+.1%}", subset=pd.IndexSlice[["close rate - global average"], :])
+            .format("{:+.2%}", subset=pd.IndexSlice[["weighted difference"], :])
+            .format("{:,.0f}", subset=pd.IndexSlice[["# of opps"], :]),
+        width="stretch",
+    )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
     
     st.markdown(
         """
