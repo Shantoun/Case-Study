@@ -38,7 +38,7 @@ forecast_today = st.date_input("Today")
 with st.expander("Notable assumptions", expanded=False):
     c1, c2 = st.columns([1, 2], vertical_alignment="center")
     with c1:
-        forecast_today = st.date_input("Today")
+        forecast_today = st.date_input("Today", key="second")
     with c2:
         st.space("medium")
         st.caption(
