@@ -138,61 +138,66 @@ with tab1:
     # -------------------------
     # Win rate per month
     # -------------------------
-    def win_rate_by_month(df):
-        tmp = df[df["Stage"].isin(["Closed Won", "Closed Lost"])].copy()
-        tmp["month"] = pd.to_datetime(tmp["Close Date"]).dt.to_period("M").dt.to_timestamp()
-    
-        g = tmp.groupby(["month", "Stage"], as_index=False).agg(
-            opp_count=("Stage", "size"),
-            arr_sum=("ARR", "sum"),
+import plotly.graph_objects as go
+
+def win_rate_by_month(df):
+    tmp = df[df["Stage"].isin(["Closed Won", "Closed Lost"])].copy()
+    tmp["month"] = pd.to_datetime(tmp["Close Date"]).dt.to_period("M").dt.to_timestamp()
+
+    g = tmp.groupby(["month", "Stage"], as_index=False).agg(
+        opp_count=("Stage", "size"),
+        arr_sum=("ARR Bookings", "sum"),
+    )
+
+    c = g.pivot(index="month", columns="Stage", values="opp_count").fillna(0).reset_index()
+    a = g.pivot(index="month", columns="Stage", values="arr_sum").fillna(0).reset_index()
+
+    out = c.merge(a, on="month", suffixes=("_count", "_arr"))
+
+    out["Closed Won_count"] = out.get("Closed Won_count", 0)
+    out["Closed Lost_count"] = out.get("Closed Lost_count", 0)
+    out["Closed Won_arr"] = out.get("Closed Won_arr", 0.0)
+    out["Closed Lost_arr"] = out.get("Closed Lost_arr", 0.0)
+
+    denom = out["Closed Won_count"] + out["Closed Lost_count"]
+    out["win_rate"] = out["Closed Won_count"] / denom.where(denom != 0, pd.NA)
+
+    return out.sort_values("month")
+
+
+def plot_monthly_win_rate_bar(monthly_df, color="#636EFA"):
+    fig = go.Figure(
+        go.Bar(
+            x=monthly_df["month"],
+            y=monthly_df["win_rate"],
+            marker=dict(color=color),
+            hovertemplate=(
+                "<b>%{x|%b %y}</b><br>"
+                "Win rate: %{y:.0%}<br><br>"
+                "Closed Won: %{customdata[0]:,.0f} opps<br>"
+                "Won ARR: $%{customdata[1]:,.0f}<br>"
+                "Closed Lost: %{customdata[2]:,.0f} opps<br>"
+                "Lost ARR: $%{customdata[3]:,.0f}"
+                "<extra></extra>"
+            ),
+            customdata=monthly_df[
+                ["Closed Won_count", "Closed Won_arr", "Closed Lost_count", "Closed Lost_arr"]
+            ].values,
         )
-    
-        c = g.pivot(index="month", columns="Stage", values="opp_count").fillna(0).reset_index()
-        a = g.pivot(index="month", columns="Stage", values="arr_sum").fillna(0).reset_index()
-    
-        out = c.merge(a, on="month", suffixes=("_count", "_arr"))
-    
-        out["Closed Won_count"] = out.get("Closed Won_count", 0)
-        out["Closed Lost_count"] = out.get("Closed Lost_count", 0)
-        out["Closed Won_arr"] = out.get("Closed Won_arr", 0.0)
-        out["Closed Lost_arr"] = out.get("Closed Lost_arr", 0.0)
-    
-        denom = out["Closed Won_count"] + out["Closed Lost_count"]
-        out["win_rate"] = out["Closed Won_count"] / denom.where(denom != 0, pd.NA)
-    
-        return out.sort_values("month")
-    
-    
-    def plot_monthly_win_rate_bar(monthly_df, color="#636EFA"):
-        fig = go.Figure(
-            go.Bar(
-                x=monthly_df["month"],
-                y=monthly_df["win_rate"],
-                marker=dict(color=color),
-                hovertemplate=(
-                    "<b>%{x|%b %y}</b><br>"
-                    "Win rate: %{y:.0%}<br><br>"
-                    "Closed Won: %{customdata[0]:,.0f} opps<br>"
-                    "Won ARR: $%{customdata[1]:,.0f}<br>"
-                    "Closed Lost: %{customdata[2]:,.0f} opps<br>"
-                    "Lost ARR: $%{customdata[3]:,.0f}"
-                    "<extra></extra>"
-                ),
-                customdata=monthly_df[
-                    ["Closed Won_count", "Closed Won_arr", "Closed Lost_count", "Closed Lost_arr"]
-                ].values,
-            )
-        )
-    
-        fig.update_layout(
-            title="Monthly Win Rate (Closed Outcomes Only)",
-            xaxis=dict(title=None, tickformat="%b %y", showgrid=False),
-            yaxis=dict(title="Win Rate", tickformat=".0%", range=[0, 1], showgrid=True),
-            margin=dict(l=40, r=40, t=60, b=40),
-            height=420,
-            showlegend=False,
-        )
-        return fig
+    )
+
+    fig.update_layout(
+        title="Monthly Win Rate (Closed Outcomes Only)",
+        xaxis=dict(title=None, tickformat="%b %y", showgrid=False),
+        yaxis=dict(title="Win Rate", tickformat=".0%", range=[0, 1], showgrid=True),
+        margin=dict(l=40, r=40, t=60, b=40),
+        height=420,
+        showlegend=False,
+    )
+    return fig
+
+
+
     
     
 
