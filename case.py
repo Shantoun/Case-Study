@@ -296,24 +296,30 @@ with tab1:
         
         
 
+    matrix, global_rate = win_rate_offset_matrix(df_recent, "lead_type")
+    st.dataframe(matrix, width="stretch")
+
+
+    matrix, global_rate = win_rate_offset_matrix(df_recent, "Inbound/Outbound Opp")
+    st.dataframe(matrix, width="stretch")
 
 
 
+    matrix, global_rate = win_rate_offset_matrix(df_recent, "XDR Sourced Lead")
+    st.dataframe(matrix, width="stretch")
 
 
 
+    matrix, global_rate = win_rate_offset_matrix(df_recent, "ZoomInfo Industry")
+    st.dataframe(matrix, width="stretch")
 
 
+    matrix, global_rate = win_rate_offset_matrix(df_recent, "Partner Sourced/Influenced/Engaged")
+    st.dataframe(matrix, width="stretch")
 
 
-
-
-
-
-
-
-
-
+    matrix, global_rate = win_rate_offset_matrix(df_recent, "Paid/Organic Opp")
+    st.dataframe(matrix, width="stretch")
 
 
 
