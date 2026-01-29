@@ -42,7 +42,7 @@ def plot_monthly_win_rate_line(monthly_df, color, reliable_date):
         title="Monthly Win Rate",
         xaxis=dict(
             title=None,
-            tickformat="%b %y",
+            tickformat="%b %Y",
             showgrid=False,
             fixedrange=True,
         ),
@@ -55,7 +55,7 @@ def plot_monthly_win_rate_line(monthly_df, color, reliable_date):
         ),
         dragmode=False,
         margin=dict(l=40, r=40, t=60, b=40),
-        height=420,
+        height=210,
         showlegend=False,
     )
 
