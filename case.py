@@ -262,11 +262,13 @@ with tab1:
             }
         ).T
     
-        out.loc["avg deviation (filtered)"] = g.loc[g["gt_5pct"], "diff_vs_global"].mean()
+        # ✅ average absolute deviation, filtered
+        out.loc["avg abs deviation (filtered)"] = (
+            g.loc[g["gt_5pct"], "diff_vs_global"].abs().mean()
+        )
     
         return out, global_rate
-    
-    
+        
     matrix, global_rate = win_rate_offset_matrix(df_recent, "Segment")
     
     def style_bool(v):
@@ -280,7 +282,8 @@ with tab1:
         matrix.style
             .format(na_rep="")
             .format("{:.1%}", subset=pd.IndexSlice[["close rate", "% of total"], :])
-            .format("{:+.1%}", subset=pd.IndexSlice[["close rate - global average", "avg deviation (filtered)"], :])
+            .format("{:+.1%}", subset=pd.IndexSlice[["close rate - global average"], :])
+            .format("{:.1%}", subset=pd.IndexSlice[["avg abs deviation (filtered)"], :])
             .format("{:,.0f}", subset=pd.IndexSlice[["# of opps"], :])
             .map(style_bool, subset=pd.IndexSlice[[">5% of data"], :]),
         width="stretch",
@@ -288,7 +291,7 @@ with tab1:
     
     st.caption(
         "ℹ️ **>5% of data** flags categories that represent at least 5% of all closed opportunities. "
-        "Only categories marked **True** are included when calculating the **avg deviation (filtered)**."
+        "Only categories marked **True** are included when calculating **avg abs deviation (filtered)**."
     )
         
         
