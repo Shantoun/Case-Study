@@ -144,45 +144,39 @@ with tab1:
         tmp = df[df["Stage"].isin(["Closed Won", "Closed Lost"])].copy()
         tmp["month"] = pd.to_datetime(tmp["Close Date"]).dt.to_period("M").dt.to_timestamp()
     
-        g = tmp.groupby(["month", "Stage"], as_index=False).agg(
-            opp_count=("Stage", "size"),
-            arr_sum=("ARR Bookings", "sum"),
+        out = (
+            tmp.groupby(["month", "Stage"])["Stage"]
+            .size()
+            .unstack(fill_value=0)
+            .reset_index()
+            .sort_values("month")
         )
     
-        c = g.pivot(index="month", columns="Stage", values="opp_count").fillna(0).reset_index()
-        a = g.pivot(index="month", columns="Stage", values="arr_sum").fillna(0).reset_index()
+        out["Closed Won"] = out.get("Closed Won", 0)
+        out["Closed Lost"] = out.get("Closed Lost", 0)
     
-        out = c.merge(a, on="month", suffixes=("_count", "_arr"))
+        denom = out["Closed Won"] + out["Closed Lost"]
+        out["win_rate"] = out["Closed Won"] / denom.where(denom != 0, pd.NA)
     
-        out["Closed Won_count"] = out.get("Closed Won_count", 0)
-        out["Closed Lost_count"] = out.get("Closed Lost_count", 0)
-        out["Closed Won_arr"] = out.get("Closed Won_arr", 0.0)
-        out["Closed Lost_arr"] = out.get("Closed Lost_arr", 0.0)
-    
-        denom = out["Closed Won_count"] + out["Closed Lost_count"]
-        out["win_rate"] = out["Closed Won_count"] / denom.where(denom != 0, pd.NA)
-    
-        return out.sort_values("month")
+        return out
     
     
-    def plot_monthly_win_rate_bar(monthly_df, color="#636EFA"):
+    def plot_monthly_win_rate_line(monthly_df, color="#636EFA"):
         fig = go.Figure(
-            go.Bar(
+            go.Scatter(
                 x=monthly_df["month"],
                 y=monthly_df["win_rate"],
-                marker=dict(color=color),
+                mode="lines+markers",
+                line=dict(width=3, color=color),
+                marker=dict(size=7, color=color),
+                customdata=monthly_df[["Closed Won", "Closed Lost"]].values,
                 hovertemplate=(
                     "<b>%{x|%b %y}</b><br>"
-                    "Win rate: %{y:.0%}<br><br>"
-                    "Closed Won: %{customdata[0]:,.0f} opps<br>"
-                    "Won ARR: $%{customdata[1]:,.0f}<br>"
-                    "Closed Lost: %{customdata[2]:,.0f} opps<br>"
-                    "Lost ARR: $%{customdata[3]:,.0f}"
+                    "Win rate: %{y:.0%}<br>"
+                    "Closed Won: %{customdata[0]:,.0f}<br>"
+                    "Closed Lost: %{customdata[1]:,.0f}"
                     "<extra></extra>"
                 ),
-                customdata=monthly_df[
-                    ["Closed Won_count", "Closed Won_arr", "Closed Lost_count", "Closed Lost_arr"]
-                ].values,
             )
         )
     
@@ -194,6 +188,7 @@ with tab1:
             height=420,
             showlegend=False,
         )
+    
         return fig
 
 
