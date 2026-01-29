@@ -233,16 +233,13 @@ with tab1:
 
 
     def win_rate_offset_matrix(df, cat_col, min_share=0.05):
-        # closed outcomes only
         d = df[df["Stage"].isin(["Closed Won", "Closed Lost"])].copy()
     
-        # global baseline
         won = (d["Stage"] == "Closed Won").sum()
         lost = (d["Stage"] == "Closed Lost").sum()
         total = won + lost
         global_rate = won / total if total else 0.0
     
-        # per-category stats
         g = (
             d.groupby(cat_col, dropna=False)["Stage"]
             .value_counts()
@@ -255,7 +252,6 @@ with tab1:
         g["pct_of_total"] = g["opps"] / total if total else 0.0
         g["gt_5pct"] = g["pct_of_total"] >= min_share
     
-        # build matrix (rows = metrics, cols = categories)
         out = pd.DataFrame(
             {
                 "close rate": g["close_rate"],
@@ -266,14 +262,19 @@ with tab1:
             }
         ).T
     
-        # average deviation using only categories above threshold
         out.loc["avg deviation (filtered)"] = g.loc[g["gt_5pct"], "diff_vs_global"].mean()
     
         return out, global_rate
     
     
-    # -------- render --------
     matrix, global_rate = win_rate_offset_matrix(df_recent, "Segment")
+    
+    def style_bool(v):
+        if v is True:
+            return "color:#16A34A;font-weight:600;"  # green
+        if v is False:
+            return "color:#000000;"
+        return ""
     
     st.dataframe(
         matrix.style
@@ -281,10 +282,7 @@ with tab1:
             .format("{:.1%}", subset=pd.IndexSlice[["close rate", "% of total"], :])
             .format("{:+.1%}", subset=pd.IndexSlice[["close rate - global average", "avg deviation (filtered)"], :])
             .format("{:,.0f}", subset=pd.IndexSlice[["# of opps"], :])
-            .applymap(
-                lambda v: "color:#16A34A;font-weight:600;" if v is True else "color:#000000;",
-                subset=pd.IndexSlice[[">5% of data"], :],
-            ),
+            .map(style_bool, subset=pd.IndexSlice[[">5% of data"], :]),
         width="stretch",
     )
     
@@ -293,8 +291,7 @@ with tab1:
         "Only categories marked **True** are included when calculating the **avg deviation (filtered)**."
     )
         
-    
-    
+        
 
 
 
