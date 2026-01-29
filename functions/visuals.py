@@ -22,7 +22,7 @@ def plot_monthly_win_rate_line(monthly_df, color, reliable_date):
         )
     )
 
-    reliable_date = 
+    reliable_date = reliable_date
     if (monthly_df["month"] == reliable_date).any():
         y_jan = monthly_df.loc[
             monthly_df["month"] == reliable_date, "win_rate"
