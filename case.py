@@ -166,14 +166,14 @@ with tab1:
         return out
     
     
-    def plot_monthly_win_rate_line(monthly_df):
+    def plot_monthly_win_rate_line(monthly_df, color):
         fig = go.Figure(
             go.Scatter(
                 x=monthly_df["month"],
                 y=monthly_df["win_rate"],
                 mode="lines+markers",
-                line=dict(width=3),      # no color → auto, works in light/dark
-                marker=dict(size=7),
+                line=dict(width=3, color=color),
+                marker=dict(size=7, color=color),
                 customdata=monthly_df[["Closed Won", "Closed Lost"]].values,
                 hovertemplate=(
                     "<b>%{x|%b %Y}</b><br>"
@@ -187,9 +187,9 @@ with tab1:
     
         jan_2024 = pd.Timestamp("2024-01-01")
         if (monthly_df["month"] == jan_2024).any():
-            y_jan = float(
-                monthly_df.loc[monthly_df["month"] == jan_2024, "win_rate"].iloc[0]
-            )
+            y_jan = monthly_df.loc[
+                monthly_df["month"] == jan_2024, "win_rate"
+            ].iloc[0]
     
             fig.add_annotation(
                 x=jan_2024,
@@ -197,10 +197,11 @@ with tab1:
                 text="Reliable from Jan 2024 — enough data points",
                 showarrow=True,
                 arrowhead=3,
+                arrowcolor=color,   # 👈 uses same color
                 ax=0,
-                ay=80,  # arrow comes from below
-                bgcolor="rgba(0,0,0,0.15)",  # neutral for light/dark
-                bordercolor="rgba(0,0,0,0.2)",
+                ay=90,
+                bgcolor="rgba(0,0,0,0.15)",
+                bordercolor="rgba(0,0,0,0.3)",
                 borderwidth=1,
             )
     
@@ -214,7 +215,7 @@ with tab1:
         )
     
         return fig
-
+    
 
 
     
