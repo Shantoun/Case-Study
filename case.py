@@ -166,17 +166,17 @@ with tab1:
         return out
     
     
-    def plot_monthly_win_rate_line(monthly_df, color="#636EFA"):
+    def plot_monthly_win_rate_line(monthly_df):
         fig = go.Figure(
             go.Scatter(
                 x=monthly_df["month"],
                 y=monthly_df["win_rate"],
                 mode="lines+markers",
-                line=dict(width=3, color=color),
-                marker=dict(size=7, color=color),
+                line=dict(width=3),      # no color → auto, works in light/dark
+                marker=dict(size=7),
                 customdata=monthly_df[["Closed Won", "Closed Lost"]].values,
                 hovertemplate=(
-                    "<b>%{x|%b %y}</b><br>"
+                    "<b>%{x|%b %Y}</b><br>"
                     "Win rate: %{y:.0%}<br>"
                     "Closed Won: %{customdata[0]:,.0f}<br>"
                     "Closed Lost: %{customdata[1]:,.0f}"
@@ -185,23 +185,22 @@ with tab1:
             )
         )
     
-        # ----- annotation: arrow pointing to Jan 2024 -----
         jan_2024 = pd.Timestamp("2024-01-01")
         if (monthly_df["month"] == jan_2024).any():
-            y_jan = float(monthly_df.loc[monthly_df["month"] == jan_2024, "win_rate"].iloc[0])
+            y_jan = float(
+                monthly_df.loc[monthly_df["month"] == jan_2024, "win_rate"].iloc[0]
+            )
     
             fig.add_annotation(
                 x=jan_2024,
                 y=y_jan,
-                text="Reliable from here (enough data)",
+                text="Reliable from Jan 2024 — enough data points",
                 showarrow=True,
                 arrowhead=3,
-                ax=0,          # arrow tail x offset (pixels)
-                ay=80,         # arrow tail y offset (pixels) -> from below
-                xanchor="left",
-                yanchor="bottom",
-                bgcolor="rgba(255,255,255,0.85)",
-                bordercolor="rgba(0,0,0,0.15)",
+                ax=0,
+                ay=80,  # arrow comes from below
+                bgcolor="rgba(0,0,0,0.15)",  # neutral for light/dark
+                bordercolor="rgba(0,0,0,0.2)",
                 borderwidth=1,
             )
     
