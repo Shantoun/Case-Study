@@ -221,7 +221,10 @@ with tab1:
     monthly_wr = win_rate_by_month(df)
     
     color = st.color_picker("Bar color", "#636EFA")
-    st.plotly_chart(plot_monthly_win_rate_bar(monthly_wr, color=color), width="stretch")
+    st.plotly_chart(
+        plot_monthly_win_rate_line(monthly_wr, color=color),
+        width="stretch"
+    )
 
 
 
