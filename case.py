@@ -54,7 +54,7 @@ with st.expander("Notable assumptions", expanded=False):
 
 
 
-tab1, tab2 = st.tabs(["Visible Pipeline", "Expected Pipeline"])
+tab1, tab2, tab3 = st.tabs(["Visible Pipeline", "Expected Pipeline", "Total Forecast"])
 
 
 ############################################################ Visible Pipeline
@@ -334,21 +334,21 @@ with tab2:
 # -------------------------
 # Total
 # -------------------------
-st.divider()
-st.header("Total Forecast")
-
-st.markdown(
+with tab3:
+    st.header("Total Forecast")
+    
+    st.markdown(
+        """
+    At the end we combine the two layers:
+    
+    - **Visible Pipeline forecast** (expected bookings from what exists now)
+    - **Expected Pipeline forecast** (expected bookings from pipeline that typically appears later)
+    
+    Together, this produces a single expected bookings curve.
+    
+    Next we’ll plug in:
+    - the tables
+    - the charts
+    - the scenario toggles (base / best / worst)
     """
-At the end we combine the two layers:
-
-- **Visible Pipeline forecast** (expected bookings from what exists now)
-- **Expected Pipeline forecast** (expected bookings from pipeline that typically appears later)
-
-Together, this produces a single expected bookings curve.
-
-Next we’ll plug in:
-- the tables
-- the charts
-- the scenario toggles (base / best / worst)
-"""
-)
+    )
