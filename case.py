@@ -1,7 +1,7 @@
 from functions.read_data import read_gsheet
 import streamlit as st
 import pandas as pd
-
+import plotly.graph_objects as go
 
 
 st.set_page_config(layout="wide")
@@ -221,8 +221,8 @@ with tab1:
     But we also don’t want tiny buckets that lie to us.
 
     To understand where that variation actually comes from, the chart below shows how the realized close rate has moved over time.
-    """
-    ).format(global_win_rate)
+    """.format(global_win_rate)
+    )
 
 
 
