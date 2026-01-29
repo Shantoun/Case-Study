@@ -35,7 +35,7 @@ def plot_monthly_win_rate_line(monthly_df, color, reliable_date):
             showarrow=True,
             arrowhead=3,
             ax=0,
-            ay=80,
+            ay=30,
         )
 
     fig.update_layout(
