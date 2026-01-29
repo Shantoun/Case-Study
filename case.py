@@ -125,13 +125,119 @@ with tab1:
     
     
     ############################################################ Probability of Closed Won based on Variables
+
+    closed_won_count = (df["Stage"] == "Closed Won").sum()
+    closed_lost_count = (df["Stage"] == "Closed Lost").sum()
+    
+    global_win_rate = closed_won_count / (closed_won_count + closed_lost_count)
+    
+    st.metric("Global Win Rate", f"{global_win_rate:.1%}")
+    st.caption(f"Closed Won: {closed_won_count:,} | Closed Lost: {closed_lost_count:,}")
+    
+    
+    # -------------------------
+    # Win rate per month
+    # -------------------------
+    def win_rate_by_month(df):
+        tmp = df[df["Stage"].isin(["Closed Won", "Closed Lost"])].copy()
+    
+        tmp["month"] = pd.to_datetime(tmp["Close Date"]).dt.to_period("M").dt.to_timestamp()
+    
+        monthly = (
+            tmp.groupby("month")["Stage"]
+            .value_counts()
+            .unstack(fill_value=0)
+            .reset_index()
+        )
+    
+        monthly["win_rate"] = (
+            monthly["Closed Won"]
+            / (monthly["Closed Won"] + monthly["Closed Lost"])
+        )
+    
+        return monthly.sort_values("month")
+    
+    
+    monthly_wr = win_rate_by_month(df)
+    
+    
+    # -------------------------
+    # Plot
+    # -------------------------
+    def plot_monthly_win_rate(monthly_df, color="#636EFA"):
+        fig = go.Figure()
+    
+        fig.add_trace(
+            go.Scatter(
+                x=monthly_df["month"],
+                y=monthly_df["win_rate"],
+                mode="lines+markers",
+                line=dict(width=3, color=color),
+                marker=dict(size=6),
+                hovertemplate=(
+                    "<b>%{x|%b %y}</b><br>"
+                    "Win rate: %{y:.1%}<br>"
+                    "Closed Won: %{customdata[0]:,.0f}<br>"
+                    "Closed Lost: %{customdata[1]:,.0f}"
+                    "<extra></extra>"
+                ),
+                customdata=monthly_df[["Closed Won", "Closed Lost"]].values,
+            )
+        )
+    
+        fig.update_layout(
+            title="Monthly Win Rate (Closed Outcomes Only)",
+            xaxis=dict(
+                title=None,
+                tickformat="%b %y",
+                showgrid=False,
+            ),
+            yaxis=dict(
+                title="Win Rate",
+                tickformat=".0%",
+                range=[0, 1],
+                showgrid=True,
+                gridcolor="rgba(200,200,200,0.3)",
+            ),
+            margin=dict(l=40, r=40, t=60, b=40),
+            height=420,
+            showlegend=False,
+        )
+    
+        return fig
+    
+    
+
+
+
+
+
+    
     st.subheader("Probability of Closed Won based on variables")
     
     st.markdown(
         """
-    If we just apply one blanket close rate of **12%** we’ll miss meaningful GTM variation.
-    
+    If we just apply one blanket close rate of **{:.1%}** we’ll miss meaningful GTM variation.
     But we also don’t want tiny buckets that lie to us.
+
+    To understand where that variation actually comes from, the chart below shows how the realized close rate has moved over time.
+    """
+    ).format(global_win_rate)
+
+
+
+    # color picker
+    color = "#636EFA"
+    
+    st.plotly_chart(
+        plot_monthly_win_rate(monthly_wr, color=color),
+        use_container_width=True,
+    )
+
+
+
+    st.markdown(
+        """
     
     So the approach is:
     - Use **recent closed opps** (default: **last 12 months**) to reflect current reality
