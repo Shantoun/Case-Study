@@ -2,7 +2,8 @@ from functions.read_data import read_gsheet
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-
+import functions.data_manipulation as dm
+import functions.visuals as viz
 
 st.set_page_config(layout="wide")
 
@@ -134,107 +135,29 @@ with tab1:
     st.metric("Global Win Rate", f"{global_win_rate:.1%}")
     st.caption(f"Closed Won: {closed_won_count:,} | Closed Lost: {closed_lost_count:,}")
     
-    
-    # -------------------------
-    # Win rate per month
-    # -------------------------
+
+    jan_2024 = pd.Timestamp("2024-01-01")
 
 
-    def win_rate_by_month(df, forecast_today):
-        tmp = df[df["Stage"].isin(["Closed Won", "Closed Lost"])].copy()
-        tmp["Close Date"] = pd.to_datetime(tmp["Close Date"])
+    mask = (
+        (pd.to_datetime(df["Close Date"]) >= jan_2024) &
+        (pd.to_datetime(df["Close Date"]) <= pd.to_datetime(forecast_today))
+    )
     
-
-        tmp = tmp[tmp["Close Date"] <= pd.to_datetime(forecast_today)]
+    df_recent = df.loc[mask]
     
-        tmp["month"] = tmp["Close Date"].dt.to_period("M").dt.to_timestamp()
+    closed_won_count = (df_recent["Stage"] == "Closed Won").sum()
+    closed_lost_count = (df_recent["Stage"] == "Closed Lost").sum()
     
-        out = (
-            tmp.groupby(["month", "Stage"])["Stage"]
-            .size()
-            .unstack(fill_value=0)
-            .reset_index()
-            .sort_values("month")
-        )
+    global_win_rate = closed_won_count / (closed_won_count + closed_lost_count)
     
-        out["Closed Won"] = out.get("Closed Won", 0)
-        out["Closed Lost"] = out.get("Closed Lost", 0)
-    
-        denom = out["Closed Won"] + out["Closed Lost"]
-        out["win_rate"] = out["Closed Won"] / denom.where(denom != 0, pd.NA)
-    
-        return out
-    
-    
-    def plot_monthly_win_rate_line(monthly_df, color):
-        fig = go.Figure(
-            go.Scatter(
-                x=monthly_df["month"],
-                y=monthly_df["win_rate"],
-                mode="lines+markers",
-                line=dict(width=3, color=color),
-                marker=dict(size=7, color=color),
-                customdata=monthly_df[["Closed Won", "Closed Lost"]].values,
-                hovertemplate=(
-                    "<b>%{x|%b %Y}</b><br>"
-                    "Win rate: %{y:.0%}<br>"
-                    "Closed Won: %{customdata[0]:,.0f}<br>"
-                    "Closed Lost: %{customdata[1]:,.0f}"
-                    "<extra></extra>"
-                ),
-            )
-        )
-    
-        jan_2024 = pd.Timestamp("2024-01-01")
-        if (monthly_df["month"] == jan_2024).any():
-            y_jan = monthly_df.loc[
-                monthly_df["month"] == jan_2024, "win_rate"
-            ].iloc[0]
-    
-            fig.add_annotation(
-                x=jan_2024,
-                y=y_jan,
-                text="<b>Reliable from Jan 2024 — enough data points</b>",
-                showarrow=True,
-                arrowhead=3,
-                ax=0,
-                ay=80,
-            )
-    
-        fig.update_layout(
-            title="Monthly Win Rate (Closed Outcomes Only)",
-            xaxis=dict(
-                title=None,
-                tickformat="%b %y",
-                showgrid=False,
-                fixedrange=True,   # ⬅ locks x zoom
-            ),
-            yaxis=dict(
-                title="Win Rate",
-                tickformat=".0%",
-                range=[0, 1],
-                showgrid=True,
-                fixedrange=True,   # ⬅ locks y zoom
-            ),
-            dragmode=False,      # ⬅ disables box/drag interactions
-            margin=dict(l=40, r=40, t=60, b=40),
-            height=420,
-            showlegend=False,
-        )
-    
-        return fig
-        
-
-
-    
-    
-
-        
-    
+    st.metric("Global Win Rate (Since Jan 2024)", f"{global_win_rate:.1%}")
+    st.caption(f"Closed Won: {closed_won_count:,} | Closed Lost: {closed_lost_count:,}")
 
 
 
 
+    
 
     
     st.subheader("Probability of Closed Won based on variables")
@@ -251,15 +174,15 @@ with tab1:
 
 
     # color picker
-    monthly_wr = win_rate_by_month(df, pd.to_datetime(forecast_today))
+    monthly_wr = dm.win_rate_by_month(df, pd.to_datetime(forecast_today))
     
     color = st.color_picker("Bar color", "#636EFA")
     st.plotly_chart(
-        plot_monthly_win_rate_line(monthly_wr, color=color),
+        viz.plot_monthly_win_rate_line(monthly_wr, color=color, reliable_date=jan_2024),
         width="stretch"
     )
 
-
+    st.caption("Only showing results with a Closed Date in the past")
 
     st.markdown(
         """
