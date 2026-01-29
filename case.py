@@ -32,7 +32,7 @@ This forecast has **two fundamental layers**:
 
 
 
-
+forecast_today = st.date_input("Today")
 
 ############################################################ Assumptions
 with st.expander("Notable assumptions", expanded=False):
