@@ -2,6 +2,10 @@ from functions.read_data import read_gsheet
 import streamlit as st
 import pandas as pd
 
+
+
+st.set_page_config(layout="wide")
+
 ########################## Read Data
 sheet = st.secrets["sheets"]["url"]
 tab1 = st.secrets["sheets"]["tab"]
@@ -330,7 +334,7 @@ with tab2:
 # -------------------------
 # Total
 # -------------------------
-st.divider
+st.divider()
 st.header("Total Forecast")
 
 st.markdown(
