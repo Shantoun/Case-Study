@@ -296,7 +296,7 @@ with tab1:
         
         
 
-    matrix, global_rate = win_rate_offset_matrix(df_recent, "lead_type")
+    matrix, global_rate = win_rate_offset_matrix(df_recent, "Lead Type")
     st.dataframe(matrix, width="stretch")
 
 
