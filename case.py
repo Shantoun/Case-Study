@@ -13,68 +13,69 @@ st.write(df)
 
 
 
-# =========================
-# Forecasting Overview (Doc-style)
-# Paste below your existing imports + page config
-# =========================
-
-st.title("Forecasting Model (Bookings / ΔARR)")
+############################################################ Overview
+st.title("Forecasting Model")
 
 st.markdown(
     """
 This forecast has **two fundamental layers**:
 
-1. **Visible Pipeline** — opportunities already in-flight in CRM.
-2. **Expected Pipeline** — opportunities we *expect to be created* as time goes on (based on historical patterns).
-
-The goal is to keep this **explainable** and **robust**, not overfit.
+1. **Visible Pipeline**: opportunities already in-flight in CRM.
+2. **Expected Pipeline**: opportunities we *expect to be created* as time goes on.
 """
 )
 
-# -------------------------
-# Assumptions
-# -------------------------
+
+
+
+
+
+############################################################ Assumptions
 with st.expander("Notable assumptions", expanded=False):
     c1, c2 = st.columns([1, 2], vertical_alignment="center")
     with c1:
-        forecast_today = st.date_input("“Today” (forecast anchor date)")
+        forecast_today = st.date_input("Today")
     with c2:
+        st.space("medium")
         st.caption(
             "This date anchors everything below (recent windows, pipeline aging, timing logic). "
-            "It’s basically: *pretend today is this day*."
         )
-
-    st.markdown("---")
-    st.markdown("**Core assumptions (simple, not dumb):**")
+    
     st.markdown(
-        """
-- **ARR is ΔARR per opportunity** (positive = adds ARR, negative = contraction).  
-- **Bookings = Closed Won ΔARR** (Closed Lost does not change ARR).  
-- We prefer **recent performance** over all-time (default: last **12 months**) to reflect current GTM reality.  
-- When a slice has **low sample size**, we **shrink** it toward a broader average (prevents noisy extremes).  
-- We optimize for **segment-level forecast accuracy** (not per-account predictions).
+        """        
+- **Bookings = Closed Won ΔARR** (Closed Lost does not change ARR).   
 """
     )
 
-# -------------------------
-# Visible Pipeline
-# -------------------------
-st.header("1) Visible Pipeline")
+
+
+
+
+############################################################ Visible Pipeline
+st.header("Visible Pipeline")
 
 st.markdown(
     """
-We already have pipeline — so the question is: **how much of it will actually book, and when?**
+We already have pipeline, so the question is: **how much of it will actually book**
 
 For each open opportunity, we estimate an **Expected Booked ΔARR** using three probability components:
 """
 )
 
-st.subheader("1.1 Three probability components")
+st.latex(
+    r"""
+    \text{Expected Booked ARR}_{\text{opp}}
+    \;=\;
+    \text{ARR}_{\text{opp}}
+    \times P(\text{win})
+    \times P(\text{stage})
+    \times P(\text{hygiene})
+    """
+)
+
 
 st.markdown(
     """
-**Expected Booked ΔARR (per opp)** ≈ **ΔARR × P(win) × P(stage) × P(hygiene)**
-
 Where:
 - **P(win)** = “Does this kind of opp usually close won?” (based on key factors)
 - **P(stage)** = “Given its current stage, what’s the implied chance of winning?”
@@ -82,6 +83,11 @@ Where:
 """
 )
 
+
+
+
+
+############################################################ Other Probabilities
 with st.expander("Other probabilities (what we’d do in a real build)", expanded=False):
     st.markdown(
         """
@@ -89,31 +95,34 @@ In a real forecasting system, we’d go deeper than three hand-built probabiliti
 
 **What I’d do with more time + better data:**
 - Train an **ML classifier** (e.g., Random Forest) using **opportunity history** (stage movement, timing, activity, source, rep behavior, etc.).
-- Output wouldn’t just be a probability — it would be a **classification per opportunity** (likely win/loss) plus **drivers** (why).
+- Output wouldn’t just be a probability, it would be a **classification per opportunity** (likely win/loss) plus **drivers** (why).
 - This matters because opps have tons of interlaced variables: rep, motion, timing, client context, lead source… all interacting.
 
-I’ve built forecasts like that before with **dozens of features**. It’s powerful — but for this case study, I’m keeping it **transparent**.
+I’ve built forecasts like that before with **dozens of features**. It’s powerful (I've gotten results up to **96%** accuracy), but for this case study, I’m keeping it simple.
 """
     )
 
+    st.divider()
     st.markdown(
         """
 **Timing extension (also real-world):**
-- Add **P(close date is accurate)**.
-- If close dates are often wrong, model slippage as a distribution:
+- **Add probability the close date is accurate**.
+- If close dates are often wrong, I'd then model the slippage as a distribution:
   - % that slip 1 month, 2 months, etc.
 - Then **spread forecasted bookings** into future months accordingly.
 """
     )
 
-# -------------------------
-# P(win) based on variables
-# -------------------------
-st.subheader("1.2 Probability of Closed Won based on variables")
+
+
+
+
+############################################################ Probability of Closed Won based on Variables
+st.subheader("1. Probability of Closed Won based on variables")
 
 st.markdown(
     """
-If we just apply one blanket close rate (placeholder: **12%**) we’ll miss meaningful GTM variation.
+If we just apply one blanket close rate of **12%** we’ll miss meaningful GTM variation.
 
 But we also don’t want tiny buckets that lie to us.
 
@@ -169,7 +178,7 @@ st.markdown(
 # -------------------------
 # P(stage)
 # -------------------------
-st.subheader("1.3 Probability based on stage")
+st.subheader("2. Probability based on stage")
 
 st.markdown(
     """
@@ -195,7 +204,7 @@ That’s more accurate than a static stage multiplier.
 # -------------------------
 # P(hygiene)
 # -------------------------
-st.subheader("1.4 Probability based on hygiene")
+st.subheader("3. Probability based on hygiene")
 
 st.markdown(
     """
