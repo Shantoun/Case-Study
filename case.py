@@ -194,28 +194,36 @@ with tab1:
             fig.add_annotation(
                 x=jan_2024,
                 y=y_jan,
-                text="Reliable from Jan 2024 — enough data points",
+                text="<b>Reliable from Jan 2024 — enough data points</b>",
                 showarrow=True,
                 arrowhead=3,
-                arrowcolor=color,   # 👈 uses same color
                 ax=0,
-                ay=90,
-                bgcolor="rgba(0,0,0,0.15)",
-                bordercolor="rgba(0,0,0,0.3)",
-                borderwidth=1,
+                ay=80,
             )
     
         fig.update_layout(
             title="Monthly Win Rate (Closed Outcomes Only)",
-            xaxis=dict(title=None, tickformat="%b %y", showgrid=False),
-            yaxis=dict(title="Win Rate", tickformat=".0%", range=[0, 1], showgrid=True),
+            xaxis=dict(
+                title=None,
+                tickformat="%b %y",
+                showgrid=False,
+                fixedrange=True,   # ⬅ locks x zoom
+            ),
+            yaxis=dict(
+                title="Win Rate",
+                tickformat=".0%",
+                range=[0, 1],
+                showgrid=True,
+                fixedrange=True,   # ⬅ locks y zoom
+            ),
+            dragmode=False,      # ⬅ disables box/drag interactions
             margin=dict(l=40, r=40, t=60, b=40),
             height=420,
             showlegend=False,
         )
     
         return fig
-    
+        
 
 
     
