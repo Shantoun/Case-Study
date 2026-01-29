@@ -217,7 +217,22 @@ with tab1:
 
 
 
-    def win_rate_offset_matrix(df, cat_col):
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+    def win_rate_offset_matrix(df, cat_col, min_share=0.05):
         # closed outcomes only
         d = df[df["Stage"].isin(["Closed Won", "Closed Lost"])].copy()
     
@@ -227,52 +242,63 @@ with tab1:
         total = won + lost
         global_rate = won / total if total else 0.0
     
-        # per-category
+        # per-category stats
         g = (
             d.groupby(cat_col, dropna=False)["Stage"]
             .value_counts()
             .unstack(fill_value=0)
         )
+    
         g["opps"] = g.get("Closed Won", 0) + g.get("Closed Lost", 0)
         g["close_rate"] = g.get("Closed Won", 0) / g["opps"].where(g["opps"] != 0, pd.NA)
         g["diff_vs_global"] = g["close_rate"] - global_rate
         g["pct_of_total"] = g["opps"] / total if total else 0.0
-        g["weighted_diff"] = g["diff_vs_global"] * g["pct_of_total"]
+        g["gt_5pct"] = g["pct_of_total"] >= min_share
     
-        # build the matrix exactly as you described (metrics as rows, categories as columns)
+        # build matrix (rows = metrics, cols = categories)
         out = pd.DataFrame(
             {
                 "close rate": g["close_rate"],
                 "close rate - global average": g["diff_vs_global"],
                 "# of opps": g["opps"],
                 "% of total": g["pct_of_total"],
-                "weighted difference": g["weighted_diff"],
+                ">5% of data": g["gt_5pct"],
             }
         ).T
     
+        # average deviation using only categories above threshold
+        out.loc["avg deviation (filtered)"] = g.loc[g["gt_5pct"], "diff_vs_global"].mean()
+    
         return out, global_rate
     
-
-
-
-
-
-
-
     
-    # usage
-    matrix, global_rate = win_rate_offset_matrix(df, "Segment")  # or df
+    # -------- render --------
+    matrix, global_rate = win_rate_offset_matrix(df_recent, "Segment")
     
-    # readable formatting (non-hacky): use Styler
     st.dataframe(
         matrix.style
             .format(na_rep="")
             .format("{:.1%}", subset=pd.IndexSlice[["close rate", "% of total"], :])
-            .format("{:+.1%}", subset=pd.IndexSlice[["close rate - global average"], :])
-            .format("{:+.2%}", subset=pd.IndexSlice[["weighted difference"], :])
-            .format("{:,.0f}", subset=pd.IndexSlice[["# of opps"], :]),
+            .format("{:+.1%}", subset=pd.IndexSlice[["close rate - global average", "avg deviation (filtered)"], :])
+            .format("{:,.0f}", subset=pd.IndexSlice[["# of opps"], :])
+            .applymap(
+                lambda v: "color:#16A34A;font-weight:600;" if v is True else "color:#000000;",
+                subset=pd.IndexSlice[[">5% of data"], :],
+            ),
         width="stretch",
     )
+    
+    st.caption(
+        "ℹ️ **>5% of data** flags categories that represent at least 5% of all closed opportunities. "
+        "Only categories marked **True** are included when calculating the **avg deviation (filtered)**."
+    )
+        
+    
+    
+
+
+
+
 
 
 
