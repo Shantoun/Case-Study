@@ -75,9 +75,9 @@ with tab1:
         \text{Expected Booked ARR}_{\text{opp}}
         \;=\;
         \text{ARR}_{\text{opp}}
-        \times P(\text{attributes})
-        \times P(\text{stage})
-        \times P(\text{hygiene})
+        \times p(\text{attributes})
+        \times p(\text{stage})
+        \times m(\text{hygiene})
         """
     )
     
